@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+Nick Montfort
+ Original Python program:
+ 8 January 2009, Taroko Gorge National Park, Taiwan and Eva Air Flight 28
+ This JavaScript version, with links:
+ 1 March 2016
+
+        rg: is it the same piece after it's been ported???? can you think of recombination as porting to different platforms in slightly different ways?
+
+Copyright (c) 2009-2016 Nick Montfort <nickm@nickm.com>
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pokémon Gorge</title>
+<!-- A Pokémon remix of Nick Montfort's Taroko Gorge.
+     Edit the word lists in the script to make the poem your own. -->
+<style>
+  body {
+    background: #32733a;
+    color: #fff;
+    margin: 0 24pt;
+    font-family: "Source Code Pro", monospace;
+    font-size: 13pt;
+    line-height: 16pt;
+  }
+  #credits {
+    float: right;
+    margin-top: 12px;
+    margin-left: 32px;
+    color: #0b3;
+    max-width: 250px;
+  }
+  #credits p { margin: 0 0 16pt; }
+  #credits a { color: #876; text-decoration: none; }
+  #main { margin-right: 282px; }
+  /* A minimum height preserves the rhythm; long lines can wrap without overlapping. */
+  .line { min-height: 16pt; overflow-wrap: anywhere; }
+  .cave { padding-left: 2ch; }
+  @media (max-width: 700px) {
+    body { margin: 0 16px; }
+    #credits { float: none; margin: 12px 0 16pt; max-width: none; }
+    #main { margin-right: 0; }
+  }
+</style>
+</head>
+<body>
+<header id="credits">
+  <p>Pokémon Gorge · 2026-10-02</p>
+  <p>Samir Simpson</p>
+  <a href="https://nickm.com/taroko_gorge/">After Nick Montfort’s Taroko Gorge</a>
+</header>
+<main id="main" aria-label="Generated Pokémon poem"></main>
+<script>
+// WORD POOLS: add or remove quoted entries, separated by commas.
+// Pokémon names stay singular; we do not add an "s" to them.
+const above = ['Pikachu', 'Eevee', 'Bulbasaur', 'Charmander', 'Squirtle',
+  'Blaziken', 'Golurk', 'Zeraora', 'Gallade', 'Haxorus', 'Crobat', 'Magikarp'];
+const below = ['tall grass', 'Viridian Forest', 'a moonlit route', 'the Pokémon Center',
+  'an empty Gym', 'a forgotten Poké Ball', 'Victory Road', 'a sleeping town',
+  'the next badge', 'a distant trainer'];
+const trans = ['watches', 'wanders toward', 'dreams of', 'guards', 'searches for',
+  'returns to', 'waits beside', 'leaves behind'];
+const intrans = ['rests', 'levels up', 'listens', 'waits', 'dreams', 'evolves', 'falls asleep'];
+const imper = ['follow', 'explore', 'remember', 'challenge', 'return to', 'search'];
+const adjectives = ['hidden', 'electric', 'forgotten', 'moonlit', 'distant', 'quiet', 'legendary'];
+const destinations = ['route', 'forest', 'Gym', 'cave', 'island', 'journey'];
+const moves = ['Light That Burns the Sky', 'Vine Whip', 'Water Gun', 'Ember', 'Splash', 'Bounce', 'Shadow Ball'];
+
+// COMMON PHRASES: edit this list to choose which refrains can appear.
+// They remain complete lines so random word combinations do not break them.
+const phrases = [
+  'Gotta catch ’em all!',
+  'I choose you!',
+  'A wild Pokémon appeared!',
+  'It’s super effective!',
+  'It’s not very effective…',
+  'A critical hit!',
+  'Prepare for trouble!',
+  'Make it double!',
+  'Team Rocket’s blasting off again!', 
+  'It’s extremely effective!',
+  'Trainer challenged you to a battle!'
+];
+
+function choose(array) { return array[Math.floor(Math.random() * array.length)]; }
+
+// Longer lines combine a Pokémon, a verb, and a place or object.
+function path() {
+  return choose(above) + ' ' + choose(trans) + ' ' + choose(below) + '.';
+}
+
+// Short lines interrupt the journey with rest, growth, or a battle move.
+function site() {
+  if (Math.random() < 0.3) return choose(above) + ' used ' + choose(moves) + '!';
+  return choose(above) + ' ' + choose(intrans) + '.';
+}
+
+// Like Taroko Gorge, each stanza includes an indented imperative ending in a dash.
+function cave() {
+  const first = choose(adjectives);
+  const second = choose(adjectives.filter(word => word !== first));
+  return choose(imper) + ' the ' + first + ' ' + second + ' ' + choose(destinations) + ' —';
+}
+
+// Each stanza has two to four observation lines, a blank, an imperative,
+// and a refrain. One line appears every 0.7 seconds, like the reference.
+let stanza = [];
+function nextStanza() {
+  const lines = [{text: '', style: ''}, {text: path(), style: ''}];
+  const count = 2 + Math.floor(Math.random() * 3);
+  for (let i = 1; i < count; i++) {
+    lines.push({text: i === count - 1 ? path() : site(), style: ''});
+  }
+  lines.push({text: '', style: ''}, {text: cave(), style: 'cave'});
+  // Refrains are selected from the phrase list; no panel or buttons are required.
+  lines.push({refrain: true}, {text: '', style: ''});
+  return lines;
+}
+
+function do_line() {
+  if (!stanza.length) stanza = nextStanza();
+  const item = stanza.shift();
+  if (item.refrain) {
+    // An empty phrase list still produces the next line without a delay.
+    if (!phrases.length) { do_line(); return; }
+    item.text = choose(phrases);
+    item.style = 'refrain';
+  }
+  const line = document.createElement('div');
+  line.className = 'line ' + item.style;
+  line.textContent = item.text ? item.text[0].toUpperCase() + item.text.slice(1) : '\u00a0';
+  const main = document.getElementById('main');
+  main.appendChild(line);
+  // Keep the latest 26 lines, as in the original's rolling poem.
+  while (main.children.length > 26) main.removeChild(main.firstChild);
+}
+
+// Keep one timer even if poem() is called again.
+let timer = null;
+function poem() {
+  if (timer !== null) clearInterval(timer);
+  timer = setInterval(do_line, 700);
+}
+do_line();
+poem();
+</script>
+</body>
+</html>
